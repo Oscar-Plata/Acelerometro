@@ -16,9 +16,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        server=findViewById(R.id.server)  as EditText
-        topico=findViewById(R.id.topic)  as EditText
-        puerto=findViewById(R.id.port)  as EditText
+        server= findViewById<EditText>(R.id.server)
+        topico= findViewById<EditText>(R.id.topic)
+        puerto= findViewById<EditText>(R.id.port)
     }
 
     fun changeScreen(view: View){
@@ -26,9 +26,6 @@ class MainActivity : AppCompatActivity() {
         val txttop= topico.text.toString()
         val txtpue= puerto.text.toString()
         val intentbroker= Intent(this,AccActivity::class.java)
-        intentbroker.putExtra("ser",txtser)
-        intentbroker.putExtra("top",txttop)
-        intentbroker.putExtra("pue",txtpue)
         Toast.makeText(this,"$txtser:$txtpue/$txttop",Toast.LENGTH_SHORT).show()
         startActivity(intentbroker)
     }
