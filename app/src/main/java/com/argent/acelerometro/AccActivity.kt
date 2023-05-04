@@ -11,7 +11,7 @@ import android.util.Log
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
-import info.mqtt.android.service.MqttAndroidClient;
+import info.mqtt.android.service.MqttAndroidClient
 //import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
 
@@ -196,6 +196,7 @@ class AccActivity : AppCompatActivity(),SensorEventListener{
         try {
             broker.disconnect()
         } catch (e: MqttException) {
+            Toast.makeText(this,e.toString(),Toast.LENGTH_LONG).show()
             e.printStackTrace()
         }
     }
