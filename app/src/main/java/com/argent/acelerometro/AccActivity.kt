@@ -137,21 +137,6 @@ class AccActivity : AppCompatActivity(),SensorEventListener{
         "R:\t ${String.format("%.2f", y)}\t\t${String.format("%.2f", lecturaORT[2])}".also { txtY.text = it }
         "Y:\t ${String.format("%.2f", z)}\t\t${String.format("%.2f", lecturaORT[0])}".also { txtZ.text = it }
         //publish(top,"$x,$y,$z",0,false)
-        if(!iniciado){
-            iniciado = true
-            val handler = Handler()
-            handler.postDelayed(object : Runnable {
-                override fun run() {
-                    publicar() //llamamos nuestro metodo
-                    handler.postDelayed(this, 100) //se ejecutara cada 10 segundos
-                }
-            }, 100) //empezara a ejecutarse después de 5 milisegundos
-
-        }
-    }
-
-    private fun publicar() {
-        publishBroker(top, "$x,$y,$z",0,false)
     }
 
     //EVENTO CUANDO EL SENSOR LEE ???
@@ -224,9 +209,19 @@ class AccActivity : AppCompatActivity(),SensorEventListener{
 
     //FUNCION PARA QUE EL BOTON MANDE DATOS AL BROKER
     fun publicar(view: View){
-        val x= Math.toDegrees(angulosOrientacion[1].toDouble())
-        val y= Math.toDegrees(angulosOrientacion[2].toDouble())
-        val z= Math.toDegrees(angulosOrientacion[0].toDouble())
-        publishBroker(top,"$x,$y,$z",0,false)
+//        val x= Math.toDegrees(angulosOrientacion[1].toDouble())
+//        val y= Math.toDegrees(angulosOrientacion[2].toDouble())
+//        val z= Math.toDegrees(angulosOrientacion[0].toDouble())
+        if(!iniciado) {
+            iniciado = true
+            val handler = Handler()
+            handler.postDelayed(object : Runnable {
+                override fun run() {
+                    publishBroker(top, "$x,$y,$z", 0, false) //llamamos nuestro metodo
+                    handler.postDelayed(this, 100) //se ejecutara cada 10 segundos
+                }
+            }, 100) //empezara a ejecutarse después de 5 milisegundos
+        }
+//        publishBroker(top,"$x,$y,$z",0,false)
     }
 }
