@@ -1,18 +1,19 @@
 package com.argent.acelerometro
 
+//import org.eclipse.paho.android.service.MqttAndroidClient
 import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import info.mqtt.android.service.MqttAndroidClient
-//import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
 
 class AccActivity : AppCompatActivity(),SensorEventListener{
@@ -36,6 +37,11 @@ class AccActivity : AppCompatActivity(),SensorEventListener{
     private lateinit var por:String
     private lateinit var top:String
     private lateinit var url:String
+    private var iniciado = false
+    private var x: Double = 0.0
+    private var y: Double = 0.0
+    private var z: Double = 0.0
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,11 +49,11 @@ class AccActivity : AppCompatActivity(),SensorEventListener{
         txtX= findViewById(R.id.tvX)
         txtY= findViewById(R.id.tvY)
         txtZ= findViewById(R.id.tvZ)
+        ser= intent.getStringExtra("ser").toString()
+        por= intent.getStringExtra("pue").toString()
+        top= intent.getStringExtra("top").toString()
+        url="tcp://$ser:$por"
         setupSensor()
-         ser= intent.getStringExtra("ser").toString()
-         por= intent.getStringExtra("pue").toString()
-         top= intent.getStringExtra("top").toString()
-         url="tcp://$ser:$por"
         Toast.makeText(this,url, Toast.LENGTH_SHORT).show()
         //setupBroker(this,"tcp://$ser:$por")
         connectBroker(this,url)
@@ -123,14 +129,29 @@ class AccActivity : AppCompatActivity(),SensorEventListener{
         }
         SensorManager.getRotationMatrix(matrizRotacion,null, lecturaACC, lecturaMGT)
         SensorManager.getOrientation(matrizRotacion, angulosOrientacion)
-        val x:Double = Math.toDegrees(angulosOrientacion[1].toDouble())
-        val y:Double = Math.toDegrees(angulosOrientacion[2].toDouble())
-        val z:Double = Math.toDegrees(angulosOrientacion[0].toDouble())
+        x = Math.toDegrees(angulosOrientacion[1].toDouble())
+        y = Math.toDegrees(angulosOrientacion[2].toDouble())
+        z = Math.toDegrees(angulosOrientacion[0].toDouble())
 
         "P\t ${String.format("%.2f", x)}\t\t${String.format("%.2f", lecturaORT[1])}".also { txtX.text = it }
         "R:\t ${String.format("%.2f", y)}\t\t${String.format("%.2f", lecturaORT[2])}".also { txtY.text = it }
         "Y:\t ${String.format("%.2f", z)}\t\t${String.format("%.2f", lecturaORT[0])}".also { txtZ.text = it }
         //publish(top,"$x,$y,$z",0,false)
+        if(!iniciado){
+            iniciado = true
+            val handler = Handler()
+            handler.postDelayed(object : Runnable {
+                override fun run() {
+                    publicar() //llamamos nuestro metodo
+                    handler.postDelayed(this, 100) //se ejecutara cada 10 segundos
+                }
+            }, 100) //empezara a ejecutarse después de 5 milisegundos
+
+        }
+    }
+
+    private fun publicar() {
+        publishBroker(top, "$x,$y,$z",0,false)
     }
 
     //EVENTO CUANDO EL SENSOR LEE ???

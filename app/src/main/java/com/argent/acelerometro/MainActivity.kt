@@ -26,6 +26,9 @@ class MainActivity : AppCompatActivity() {
         val txttop= topico.text.toString()
         val txtpue= puerto.text.toString()
         val intentbroker= Intent(this,AccActivity::class.java)
+        intentbroker.putExtra("ser",txtser)
+        intentbroker.putExtra("top",txttop)
+        intentbroker.putExtra("pue",txtpue)
         Toast.makeText(this,"$txtser:$txtpue/$txttop",Toast.LENGTH_SHORT).show()
         startActivity(intentbroker)
     }
