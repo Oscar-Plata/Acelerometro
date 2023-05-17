@@ -1,6 +1,7 @@
 package com.argent.acelerometro
 
 //import org.eclipse.paho.android.service.MqttAndroidClient
+import android.annotation.SuppressLint
 import android.content.Context
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -27,9 +28,11 @@ class AccActivity : AppCompatActivity(),SensorEventListener{
     private val angulosOrientacion = FloatArray(3)
 
     //Variables UI
-    private lateinit var txtX:TextView
-    private lateinit var txtY:TextView
-    private lateinit var txtZ:TextView
+    private lateinit var txtANG:TextView
+    private lateinit var txtACC:TextView
+    private lateinit var txtGYR:TextView
+    private lateinit var txtMAG:TextView
+    private lateinit var txtORT:TextView
 
     //Variables Broker
     private lateinit var broker: MqttAndroidClient
@@ -37,18 +40,19 @@ class AccActivity : AppCompatActivity(),SensorEventListener{
     private lateinit var por:String
     private lateinit var top:String
     private lateinit var url:String
-    private var iniciado = false
+    private var iniciado = false //handler
     private var x: Double = 0.0
     private var y: Double = 0.0
     private var z: Double = 0.0
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_acc)
-        txtX= findViewById(R.id.tvX)
-        txtY= findViewById(R.id.tvY)
-        txtZ= findViewById(R.id.tvZ)
+        txtANG= findViewById(R.id.tvANG)
+        txtACC= findViewById(R.id.tvACC)
+        txtGYR= findViewById(R.id.tvGYR)
+        txtMAG= findViewById(R.id.tvMAG)
+        txtORT= findViewById(R.id.tvORT)
         ser= intent.getStringExtra("ser").toString()
         por= intent.getStringExtra("pue").toString()
         top= intent.getStringExtra("top").toString()
@@ -132,14 +136,19 @@ class AccActivity : AppCompatActivity(),SensorEventListener{
         x = Math.toDegrees(angulosOrientacion[1].toDouble())
         y = Math.toDegrees(angulosOrientacion[2].toDouble())
         z = Math.toDegrees(angulosOrientacion[0].toDouble())
-
-        "P\t ${String.format("%.2f", x)}\t\t${String.format("%.2f", lecturaORT[1])}".also { txtX.text = it }
-        "R:\t ${String.format("%.2f", y)}\t\t${String.format("%.2f", lecturaORT[2])}".also { txtY.text = it }
-        "Y:\t ${String.format("%.2f", z)}\t\t${String.format("%.2f", lecturaORT[0])}".also { txtZ.text = it }
-        //publish(top,"$x,$y,$z",0,false)
+        //Actualizar textviews
+        //x , y , z (m/s^2)
+        txtACC.text="Acc:\t\t${String.format("%2.2f", lecturaACC[0])},\t\t${String.format("%2.2f", lecturaACC[1])},\t\t${String.format("%2.2f", lecturaACC[2])}"
+        //x , y , z (rad/s)
+        txtGYR.text="Gyr:\t\t${String.format("%2.2f", lecturaGYR[0])},\t\t${String.format("%2.2f", lecturaGYR[1])},\t\t${String.format("%2.2f", lecturaGYR[2])}"
+        //x , y , z (uT)
+        txtMAG.text="Mag:\t\t${String.format("%2.2f", lecturaMGT[0])},\t\t${String.format("%2.2f", lecturaMGT[1])},\t\t${String.format("%2.2f", lecturaMGT[2])}"
+        //pitch -> x, roll -> y, yaw -> z (angulos)
+        txtORT.text="Ort:\t\t${String.format("%2.2f", lecturaORT[1])},\t\t${String.format("%2.2f", lecturaORT[2])},\t\t${String.format("%2.2f", lecturaORT[0])}"
+        txtANG.text="Ang:\t\t${String.format("%2.2f", x)},\t\t${String.format("%2.2f",y)},\t\t${String.format("%2.2f", z)}"
     }
 
-    //EVENTO CUANDO EL SENSOR LEE ???
+    //EVENTO CUANDO EL SENSOR ???
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
         return
     }
@@ -209,19 +218,31 @@ class AccActivity : AppCompatActivity(),SensorEventListener{
 
     //FUNCION PARA QUE EL BOTON MANDE DATOS AL BROKER
     fun publicar(view: View){
-//        val x= Math.toDegrees(angulosOrientacion[1].toDouble())
-//        val y= Math.toDegrees(angulosOrientacion[2].toDouble())
-//        val z= Math.toDegrees(angulosOrientacion[0].toDouble())
         if(!iniciado) {
             iniciado = true
+            Toast.makeText(applicationContext,"HANDLER INICIADO",Toast.LENGTH_SHORT).show()
             val handler = Handler()
             handler.postDelayed(object : Runnable {
                 override fun run() {
-                    publishBroker(top, "$x,$y,$z", 0, false) //llamamos nuestro metodo
-                    handler.postDelayed(this, 100) //se ejecutara cada 10 segundos
+                    val xh=Math.toDegrees(angulosOrientacion[1].toDouble());
+                    val yh=Math.toDegrees(angulosOrientacion[2].toDouble());
+                    val zh=Math.toDegrees(angulosOrientacion[0].toDouble());
+                    //mandar angulos
+                    publishBroker(top, "${String.format("%2.2f", xh)},${String.format("%2.2f", yh)},${String.format("%2.2f", zh)}",0, false) //llamamos nuestro metodo
+                    //mandar acc
+                    publishBroker("$top/ACC", "${String.format("%2.2f", lecturaACC[0])},${String.format("%2.2f", lecturaACC[1])},${String.format("%2.2f", lecturaACC[2])}", 0, false) //llamamos nuestro metodo
+                    //mandar gyr
+                    publishBroker("$top/GYR", "${String.format("%2.2f", lecturaGYR[0])},${String.format("%2.2f", lecturaGYR[1])},${String.format("%2.2f", lecturaGYR[2])}", 0, false) //llamamos nuestro metodo
+                    //mandar mag
+                    publishBroker("$top/MAG", "${String.format("%2.2f", lecturaMGT[0])},${String.format("%2.2f", lecturaMGT[1])},${String.format("%2.2f", lecturaMGT[2])}", 0, false) //llamamos nuestro metodo
+                    //mandar ort
+                    publishBroker("$top/ORT", "${String.format("%2.2f", lecturaORT[1])},${String.format("%2.2f", lecturaORT[2])},${String.format("%2.2f", lecturaORT[0])}", 0, false) //llamamos nuestro metodo
+                    handler.postDelayed(this, 100) //se ejecutara cada 100 segundos
                 }
-            }, 100) //empezara a ejecutarse después de 5 milisegundos
+            }, 100) //empezara a ejecutarse después de 100 milisegundos
+        }else{
+            Toast.makeText(applicationContext,"HANDLER DETENENIDO",Toast.LENGTH_SHORT).show()
+            //detener handler
         }
-//        publishBroker(top,"$x,$y,$z",0,false)
     }
 }
